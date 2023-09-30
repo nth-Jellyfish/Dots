@@ -1,7 +1,23 @@
 // Select the canvas element
 import { Vector2, Dot, Board } from './dot.js'
-let cnv = document.getElementById('myCanvas');
 
+
+let cnv = document.getElementById('myCanvas')
+let ctx = cnv.getContext('2d');
+let background = 'rgb(143, 153, 251)'
+let dotColor = 'rgb(188, 145, 229)'
+let lineColor = (alpha) => `rgba(148, 0, 255, ${alpha})`
+// old color: #2E4374
+let board = new Board(1400, 500, background, dotColor, lineColor, ctx)
+for (let i = 0; i < 37; i++) {
+    board.generateDot()
+}
+
+function animate() {
+    board.frame()
+    requestAnimationFrame(animate)
+}
+animate()
 
 
 // function resizeCanvas() {
@@ -32,33 +48,3 @@ let cnv = document.getElementById('myCanvas');
 
 // Handle window resize
 // window.addEventListener('resize', resizeCanvas);
-
-
-let ctx = cnv.getContext('2d');
-ctx.fillStyle = '#2E4374';
-ctx.fillRect(0, 0, 1400, 500); // x, y, width, height
-
-
-let board = new Board(1400, 500, '#2E4374', ctx)
-
-for (let i = 0; i < 50; i++) {
-    board.generateDot()
-}
-
-function animate() {
-    board.frame()
-    requestAnimationFrame(animate)
-}
-
-animate()
-
-function totalRedraw(ctx) {
-    ctx.clearRect(0, 0, cnv.width, cnv.height);
-    ctx.fillStyle = '#2E4374';
-    ctx.fillRect(0, 0, 1400, 500); // x, y, width, height
-    dots.forEach(dot => dot.frame(ctx))
-}
-
-function partialRedraw() {
-
-}
