@@ -9,24 +9,33 @@ rgb(197, 139, 229)
 rgb(168, 192, 238)
 rgb(255, 183, 253)
 */
+/* */
 let height = window.innerHeight
 let width = window.innerWidth
-let bindRadius = 400
-let lineWidth = 0.5
-let dotRenderChance = 0.3
+let bindRadius = 500
+let lineWidth = 0.4
+let dotRenderChance = 1.0
+let lineChance = 0.3
+let dots = 77
+let backgroundColor = '126, 109, 224'
+let dotColor = '155, 40, 123'
+let l1Color = '126, 109, 224'
+let l2Color = '126, 109, 224'
+let l3Color = '23, 15, 17'
+/* */
 
-let background = 'rgb(143, 153, 251)'
-let dotColor = 'rgb(148, 0, 255)'
-let lineColor1 = (alpha) => `rgba(181, 23, 158, ${alpha})`
-let lineColor2 = (alpha) => `rgba(231, 198, 255, ${alpha})`
-let lineColor3 = (alpha) => `rgba(76, 201, 240, ${alpha})`
+let background = `rgb(${backgroundColor})`
+let dotColorRgb = `rgb(${dotColor})`
+let lineColor1 = (alpha) => `rgba(${l1Color}, ${alpha})`
+let lineColor2 = (alpha) => `rgba(${l2Color}, ${alpha})`
+let lineColor3 = (alpha) => `rgba(${l3Color}, ${alpha})`
 // old color: #2E4374
 console.log(window.innerHeight)
 console.log(window.innerWidth)
 cnv.height = height
 cnv.width = width
-let board = new Board(width, height, background, dotColor, lineColor1, lineColor2, lineColor3, lineWidth, bindRadius, dotRenderChance, ctx)
-for (let i = 0; i < 55; i++) {
+let board = new Board(width, height, background, dotColorRgb, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, bindRadius, dotRenderChance, ctx)
+for (let i = 0; i < dots; i++) {
     board.generateDot()
 }
 

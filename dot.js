@@ -48,7 +48,7 @@ class Connection {
 // dots need to be removed once they are out of frame!
 // should have variable color
 export class Board {
-    constructor(width, height, color, dotcolor, lineColor1, lineColor2, lineColor3, lineWidth, bindRadius, dotRenderChance, ctx) {
+    constructor(width, height, color, dotcolor, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, bindRadius, dotRenderChance, ctx) {
         this.width = width
         this.height = height
         this.color = color
@@ -57,6 +57,7 @@ export class Board {
         this.lineColor2 = lineColor2
         this.lineColor3 = lineColor3
         this.lineWidth = lineWidth
+        this.lineChance = lineChance
         this.bindRadius = bindRadius
         this.dotRenderChance = dotRenderChance
         this.headRoom = 200
@@ -99,7 +100,6 @@ export class Board {
         console.log("partial redraw")
     }
     addConnections() {
-        let lineChance = 0.5
         this.dots.sort((a, b) => a.x - b.x)
         for (let i = 0; i < this.dots.length; i++) {
             for (let j = i+1; j < this.dots.length; j++) {
@@ -115,7 +115,7 @@ export class Board {
                 doti.attemptedConnections.push(dotj)
                 dotj.attemptedConnections.push(doti)
 
-                if (Math.random() > lineChance) {
+                if (Math.random() > this.lineChance) {
                     console.log("miss")
                     continue
                 }
