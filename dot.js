@@ -2,13 +2,14 @@
 // Should have a depth field perhaps
 // Should consider having more granular x and y and velocity
 export class Dot {
-    constructor(radius, bindRadius, color, x, y, velocityX, velocityY) {
+    constructor(radius, bindRadius, color, x, y, velocityX, velocityY, render) {
       this.radius = radius
       this.bindRadius = bindRadius
       this.color = color
       this.x = x
       this.y = y
       this.velocity = new Vector2(velocityX, velocityY)
+      this.render = render
       // memory leak something
       this.attemptedConnections = []
     }
@@ -25,9 +26,11 @@ export class Dot {
         ctx.closePath();
     }
     // maybe break up this into two functions so I can call proximity lines in between
+    // could change the render var to this function so that we can control rendering on a per frame basis
     frame(ctx) {
-        //this.draw(ctx)
-        this.step()
+        if (this.render) {
+            this.draw(ctx)
+        }
     }
     addAttemptedConnection(dot) {
         this.attemptedConnections.push(dot)
@@ -45,14 +48,17 @@ class Connection {
 // dots need to be removed once they are out of frame!
 // should have variable color
 export class Board {
-    constructor(width, height, color, dotcolor, lineColor1, lineColor2, bindRadius, ctx) {
+    constructor(width, height, color, dotcolor, lineColor1, lineColor2, lineColor3, lineWidth, bindRadius, dotRenderChance, ctx) {
         this.width = width
         this.height = height
         this.color = color
         this.dotcolor = dotcolor
         this.lineColor1 = lineColor1
         this.lineColor2 = lineColor2
+        this.lineColor3 = lineColor3
+        this.lineWidth = lineWidth
         this.bindRadius = bindRadius
+        this.dotRenderChance = dotRenderChance
         this.headRoom = 200
         this.ctx = ctx
         this.dots = []
@@ -60,13 +66,18 @@ export class Board {
     }
     // These guys might want to fade in
     generateDot() {
-        let radius = randPositive(3, 2)
+
+        let radius = randPositive(1, 2)
         let x = randPositive(0, this.width)
         let y = randPositive(0, this.height)
         let xVelocity = rand(1.5)
         let yVelocity = rand(1)
         // #E5C3A6
-        this.dots.push(new Dot(radius, this.bindRadius, this.dotcolor, x, y, xVelocity, yVelocity))
+        if (Math.random() > this.dotRenderChance) {
+            this.dots.push(new Dot(radius, this.bindRadius, this.dotcolor, x, y, xVelocity, yVelocity, false))
+        } else {
+            this.dots.push(new Dot(radius, this.bindRadius, this.dotcolor, x, y, xVelocity, yVelocity, true))
+        }
     }
     addDot(dot) {
         this.dots.push(dot)
@@ -76,10 +87,12 @@ export class Board {
         // old color: 2E4374
         this.ctx.fillStyle = this.color
         this.ctx.fillRect(0, 0, this.width, this.height) // x, y, width, height
-        this.dots.forEach(dot => dot.frame(this.ctx))
+        this.dots.forEach(dot => dot.step())
         this.addConnections()
         this.removeConnections()
         this.renderConnections()
+        this.dots.forEach(dot => dot.frame(this.ctx))
+
         this.removeOutliers()
     }
     partialRedraw() {
@@ -112,10 +125,13 @@ export class Board {
                 let diff = vectori.subtract(vectorj)
                 let distance = diff.magnitude()
                 if (distance < doti.bindRadius) {
-                    if (Math.random() < 0.5) {
+                    let rng = Math.random()
+                    if (rng < 0.33) {
                         this.lines.push(new Connection(doti, dotj, this.lineColor1))
-                    } else {
+                    } else if(rng <=.66) {
                         this.lines.push(new Connection(doti, dotj, this.lineColor2))
+                    } else {
+                        this.lines.push(new Connection(doti, dotj, this.lineColor3))
                     }
                 }
             }
@@ -145,7 +161,7 @@ export class Board {
             let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
             let color = this.lines[i].colorLambda(strength)
             this.ctx.strokeStyle = color
-            this.ctx.lineWidth = 0.6
+            this.ctx.lineWidth = this.lineWidth
             this.ctx.beginPath()
             this.ctx.moveTo(doti.x, doti.y)
             this.ctx.lineTo(dotj.x, dotj.y)
