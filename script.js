@@ -9,15 +9,21 @@ rgb(197, 139, 229)
 rgb(168, 192, 238)
 rgb(255, 183, 253)
 */
-
+let height = window.innerHeight
+let width = window.innerWidth
+let bindRadius = 400
 
 let background = 'rgb(143, 153, 251)'
 let dotColor = 'rgb(188, 145, 229)'
 let lineColor1 = (alpha) => `rgba(148, 0, 255, ${alpha})`
 let lineColor2 = (alpha) => `rgba(148, 0, 255, ${alpha})`
 // old color: #2E4374
-let board = new Board(window.innerWidth, window.innerHeight, background, dotColor, lineColor1, lineColor2, ctx)
-for (let i = 0; i < 66; i++) {
+console.log(window.innerHeight)
+console.log(window.innerWidth)
+cnv.height = height
+cnv.width = width
+let board = new Board(width, height, background, dotColor, lineColor1, lineColor2, bindRadius, ctx)
+for (let i = 0; i < 55; i++) {
     board.generateDot()
 }
 

@@ -15,7 +15,7 @@ export class Dot {
     step() {
         this.x = this.x + this.velocity.x
         this.y = this.y + this.velocity.y
-        return new Vector2(this.x, this.y)
+        //return new Vector2(this.x, this.y)
     }
     draw(ctx) {
         ctx.beginPath();
@@ -45,13 +45,14 @@ class Connection {
 // dots need to be removed once they are out of frame!
 // should have variable color
 export class Board {
-    constructor(width, height, color, dotcolor, lineColor1, lineColor2, ctx) {
+    constructor(width, height, color, dotcolor, lineColor1, lineColor2, bindRadius, ctx) {
         this.width = width
         this.height = height
         this.color = color
         this.dotcolor = dotcolor
         this.lineColor1 = lineColor1
         this.lineColor2 = lineColor2
+        this.bindRadius = bindRadius
         this.headRoom = 200
         this.ctx = ctx
         this.dots = []
@@ -65,7 +66,7 @@ export class Board {
         let xVelocity = rand(1.5)
         let yVelocity = rand(1)
         // #E5C3A6
-        this.dots.push(new Dot(radius, 300, this.dotcolor, x, y, xVelocity, yVelocity))
+        this.dots.push(new Dot(radius, this.bindRadius, this.dotcolor, x, y, xVelocity, yVelocity))
     }
     addDot(dot) {
         this.dots.push(dot)
@@ -85,7 +86,7 @@ export class Board {
         console.log("partial redraw")
     }
     addConnections() {
-        let lineChance = 1.0
+        let lineChance = 0.5
         this.dots.sort((a, b) => a.x - b.x)
         for (let i = 0; i < this.dots.length; i++) {
             for (let j = i+1; j < this.dots.length; j++) {
@@ -184,9 +185,10 @@ export class Board {
     }
     // maybe we just reassign that outliers rather than generate new!!
     removeOutliers() {
+        let headRoom = this.headRoom
         let count = this.dots.length
-        let clone = this.dots.filter(dot => dot.x > this.width || dot.x < 0 || dot.y > this.height || dot.y < 0)
-        this.dots = this.dots.filter(dot => dot.x < this.width && dot.x > 0 && dot.y < this.height && dot.y > 0)
+        let clone = this.dots.filter(dot => dot.x > this.width + headRoom || dot.x < 0 - headRoom || dot.y > this.height + headRoom || dot.y < 0 - headRoom)
+        this.dots = this.dots.filter(dot => dot.x <= this.width + headRoom && dot.x >= 0 - headRoom && dot.y <= this.height + headRoom && dot.y >= 0 - headRoom)
         if (clone.length + this.dots.length != count) {
             console.log("WTF")
         }
