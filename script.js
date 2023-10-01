@@ -4,6 +4,13 @@ import { Vector2, Dot, Board } from './dot.js'
 
 let cnv = document.getElementById('myCanvas')
 let ctx = cnv.getContext('2d');
+/*
+rgb(197, 139, 229)
+rgb(168, 192, 238)
+rgb(255, 183, 253)
+*/
+
+
 let background = 'rgb(143, 153, 251)'
 let dotColor = 'rgb(188, 145, 229)'
 let lineColor = (alpha) => `rgba(148, 0, 255, ${alpha})`

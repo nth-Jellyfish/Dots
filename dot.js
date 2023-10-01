@@ -9,6 +9,8 @@ export class Dot {
       this.x = x
       this.y = y
       this.velocity = new Vector2(velocityX, velocityY)
+      // memory leak something
+      this.attemptedConnections = []
     }
     step() {
         this.x = this.x + this.velocity.x
@@ -27,6 +29,17 @@ export class Dot {
         //this.draw(ctx)
         this.step()
     }
+    addAttemptedConnection(dot) {
+        this.attemptedConnections.push(dot)
+    }
+}
+
+class Connection {
+    constructor(doti, dotj, colorLambda) {
+        this.doti = doti
+        this.dotj = dotj
+        this.colorLambda = colorLambda
+    }
 }
 
 // dots need to be removed once they are out of frame!
@@ -40,6 +53,7 @@ export class Board {
         this.lineColor = lineColor
         this.ctx = ctx
         this.dots = []
+        this.lines = []
     }
     // These guys might want to fade in
     generateDot() {
@@ -60,11 +74,76 @@ export class Board {
         this.ctx.fillStyle = this.color
         this.ctx.fillRect(0, 0, 1400, 500) // x, y, width, height
         this.dots.forEach(dot => dot.frame(this.ctx))
-        this.proximityLines()
+        this.addConnections()
+        this.removeConnections()
+        this.renderConnections()
         this.removeOutliers()
     }
     partialRedraw() {
         console.log("partial redraw")
+    }
+    addConnections() {
+        let lineChance = 1.0
+        this.dots.sort((a, b) => a.x - b.x)
+        for (let i = 0; i < this.dots.length; i++) {
+            for (let j = i+1; j < this.dots.length; j++) {
+                let doti = this.dots[i]
+                let dotj = this.dots[j]
+                if (doti.attemptedConnections.includes(dotj)) {
+                    continue
+                }
+                if (dotj.x - doti.x > doti.bindRadius) {
+                    break
+                }
+
+                doti.attemptedConnections.push(dotj)
+                dotj.attemptedConnections.push(doti)
+
+                if (Math.random() > lineChance) {
+                    console.log("miss")
+                    continue
+                }
+
+                let vectori = new Vector2(doti.x, doti.y)
+                let vectorj = new Vector2(dotj.x, dotj.y)
+                let diff = vectori.subtract(vectorj)
+                let distance = diff.magnitude()
+                if (distance < doti.bindRadius) {
+                    this.lines.push(new Connection(doti, dotj, this.lineColor))
+                }
+            }
+        }
+    }
+    removeConnections() {
+        this.lines.filter(connection => {
+            let doti = connection.doti
+            let dotj = connection.dotj
+            let vectori = new Vector2(doti.x, doti.y)
+            let vectorj = new Vector2(dotj.x, dotj.y)
+            let diff = vectori.subtract(vectorj)
+            let distance = diff.magnitude()
+            // will need to change this if we have diff bind radii
+            return distance < doti.bindRadius
+        })
+    }
+
+    renderConnections() {
+        for (let i = 0; i < this.lines.length; i++) {
+            let doti = this.lines[i].doti
+            let dotj = this.lines[i].dotj
+            let vectori = new Vector2(doti.x, doti.y)
+            let vectorj = new Vector2(dotj.x, dotj.y)
+            let diff = vectori.subtract(vectorj)
+            let distance = diff.magnitude()
+            let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
+            let color = this.lines[i].colorLambda(strength)
+            this.ctx.strokeStyle = color
+            this.ctx.lineWidth = 0.3
+            this.ctx.beginPath()
+            this.ctx.moveTo(doti.x, doti.y)
+            this.ctx.lineTo(dotj.x, dotj.y)
+            this.ctx.stroke()
+        }
     }
     // Should we go by the greater or lesser bind distance?
     proximityLines() {
