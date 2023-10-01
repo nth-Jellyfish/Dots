@@ -6,21 +6,22 @@ export class Dot {
       this.radius = radius
       this.bindRadius = bindRadius
       this.color = color
-      this.x = x
-      this.y = y
+      this.mass = radius * 10
+      this.position = new Vector2(x, y)
       this.velocity = new Vector2(velocityX, velocityY)
       this.render = render
       // memory leak something
       this.attemptedConnections = []
     }
     step() {
-        this.x = this.x + this.velocity.x
-        this.y = this.y + this.velocity.y
+
+        this.position.x = this.position.x + this.velocity.x
+        this.position.y = this.position.y + this.velocity.y
         //return new Vector2(this.x, this.y)
     }
     draw(ctx) {
         ctx.beginPath();
-        ctx.arc(Math.round(this.x), Math.round(this.y), this.radius, 0, 2 * Math.PI);
+        ctx.arc(Math.round(this.position.x), Math.round(this.position.y), this.radius, 0, 2 * Math.PI);
         ctx.fillStyle = this.color;
         ctx.fill();
         ctx.closePath();
@@ -39,8 +40,7 @@ export class Dot {
         this.radius = radius
         this.bindRadius = bindRadius
         this.color = color
-        this.x = x
-        this.y = y
+        this.position = new Vector2(x, y)
         this.velocity = new Vector2(velocityX, velocityY)
         this.render = render
         // memory leak something
@@ -54,6 +54,10 @@ class Connection {
         this.doti = doti
         this.dotj = dotj
         this.colorLambda = colorLambda
+    }
+    applyForce() {
+        const GRAVITATIONAL_CONSTANT = 2
+        //let force = 2 * this.doti.mass * this.dotj.mass / (this.doti.)
     }
 }
 
@@ -80,11 +84,11 @@ export class Board {
     // These guys might want to fade in
     generateDot() {
 
-        let radius = randPositive(1, 2)
+        let radius = randPositive(1, 30)
         let x = randPositive(0, this.width)
         let y = randPositive(0, this.height)
-        let xVelocity = rand(1.5)
-        let yVelocity = rand(1)
+        let xVelocity = rand(1)
+        let yVelocity = rand(.5)
         // #E5C3A6
         if (Math.random() > this.dotRenderChance) {
             this.dots.push(new Dot(radius, this.bindRadius, this.dotcolor, x, y, xVelocity, yVelocity, false))
@@ -93,7 +97,7 @@ export class Board {
         }
     }
     regenerateDot(dot) {
-        let radius = randPositive(1, 2)
+        let radius = randPositive(1, 30)
         let x = randPositive(0, this.width)
         let y = randPositive(0, this.height)
         let xVelocity = rand(1.5)
@@ -124,19 +128,19 @@ export class Board {
         console.log("partial redraw")
     }
     addConnections() {
-        this.dots.sort((a, b) => a.x - b.x)
+        this.dots.sort((a, b) => a.position.x - b.position.x)
         for (let i = 0; i < this.dots.length; i++) {
             for (let j = i+1; j < this.dots.length; j++) {
                 let doti = this.dots[i]
                 let dotj = this.dots[j]
-                let vectori = new Vector2(doti.x, doti.y)
-                let vectorj = new Vector2(dotj.x, dotj.y)
+                let vectori = new Vector2(doti.position.x, doti.position.y)
+                let vectorj = new Vector2(dotj.position.x, dotj.position.y)
                 let diff = vectori.subtract(vectorj)
                 let distance = diff.magnitude()
                 if (doti.attemptedConnections.includes(dotj)) {
                     continue
                 }
-                if (dotj.x - doti.x > doti.bindRadius) {
+                if (dotj.position.x - doti.position.x > doti.bindRadius) {
                     break
                 }
 
@@ -170,8 +174,8 @@ export class Board {
         this.lines = this.lines.filter(connection => {
             let doti = connection.doti
             let dotj = connection.dotj
-            let vectori = new Vector2(doti.x, doti.y)
-            let vectorj = new Vector2(dotj.x, dotj.y)
+            let vectori = new Vector2(doti.position.x, doti.position.y)
+            let vectorj = new Vector2(dotj.position.x, dotj.position.y)
             let diff = vectori.subtract(vectorj)
             let distance = diff.magnitude()
             // will need to change this if we have diff bind radii
@@ -183,8 +187,8 @@ export class Board {
         for (let i = 0; i < this.lines.length; i++) {
             let doti = this.lines[i].doti
             let dotj = this.lines[i].dotj
-            let vectori = new Vector2(doti.x, doti.y)
-            let vectorj = new Vector2(dotj.x, dotj.y)
+            let vectori = new Vector2(doti.position.x, doti.position.y)
+            let vectorj = new Vector2(dotj.position.x, dotj.position.y)
             let diff = vectori.subtract(vectorj)
             let distance = diff.magnitude()
             let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
@@ -192,15 +196,15 @@ export class Board {
             this.ctx.strokeStyle = color
             this.ctx.lineWidth = this.lineWidth
             this.ctx.beginPath()
-            this.ctx.moveTo(doti.x, doti.y)
-            this.ctx.lineTo(dotj.x, dotj.y)
+            this.ctx.moveTo(doti.position.x, doti.position.y)
+            this.ctx.lineTo(dotj.position.x, dotj.position.y)
             this.ctx.stroke()
         }
     }
     // Should we go by the greater or lesser bind distance?
     proximityLines() {
         let lineChance = 1.0
-        this.dots.sort((a, b) => a.x - b.x)
+        this.dots.sort((a, b) => a.position.x - b.position.x)
 
         for (let i = 0; i < this.dots.length; i++) {
             for (let j = i+1; j < this.dots.length; j++) {
@@ -232,8 +236,8 @@ export class Board {
     removeOutliers() {
         let headRoom = this.headRoom
         let count = this.dots.length
-        let clone = this.dots.filter(dot => dot.x > this.width + headRoom || dot.x < 0 - headRoom || dot.y > this.height + headRoom || dot.y < 0 - headRoom)
-        this.dots = this.dots.filter(dot => dot.x <= this.width + headRoom && dot.x >= 0 - headRoom && dot.y <= this.height + headRoom && dot.y >= 0 - headRoom)
+        let clone = this.dots.filter(dot => dot.position.x > this.width + headRoom || dot.position.x < 0 - headRoom || dot.position.y > this.height + headRoom || dot.position.y < 0 - headRoom)
+        this.dots = this.dots.filter(dot => dot.position.x <= this.width + headRoom && dot.position.x >= 0 - headRoom && dot.position.y <= this.height + headRoom && dot.position.y >= 0 - headRoom)
         if (clone.length + this.dots.length != count) {
             console.log("WTF")
         }
