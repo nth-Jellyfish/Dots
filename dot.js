@@ -45,12 +45,14 @@ class Connection {
 // dots need to be removed once they are out of frame!
 // should have variable color
 export class Board {
-    constructor(width, height, color, dotcolor, lineColor, ctx) {
+    constructor(width, height, color, dotcolor, lineColor1, lineColor2, ctx) {
         this.width = width
         this.height = height
         this.color = color
         this.dotcolor = dotcolor
-        this.lineColor = lineColor
+        this.lineColor1 = lineColor1
+        this.lineColor2 = lineColor2
+        this.headRoom = 200
         this.ctx = ctx
         this.dots = []
         this.lines = []
@@ -58,8 +60,8 @@ export class Board {
     // These guys might want to fade in
     generateDot() {
         let radius = randPositive(3, 2)
-        let x = randPositive(0, 1300)
-        let y = randPositive(0, 500)
+        let x = randPositive(0, this.width)
+        let y = randPositive(0, this.height)
         let xVelocity = rand(1.5)
         let yVelocity = rand(1)
         // #E5C3A6
@@ -72,7 +74,7 @@ export class Board {
         this.ctx.clearRect(0, 0, this.width, this.height)
         // old color: 2E4374
         this.ctx.fillStyle = this.color
-        this.ctx.fillRect(0, 0, 1400, 500) // x, y, width, height
+        this.ctx.fillRect(0, 0, this.width, this.height) // x, y, width, height
         this.dots.forEach(dot => dot.frame(this.ctx))
         this.addConnections()
         this.removeConnections()
@@ -109,13 +111,17 @@ export class Board {
                 let diff = vectori.subtract(vectorj)
                 let distance = diff.magnitude()
                 if (distance < doti.bindRadius) {
-                    this.lines.push(new Connection(doti, dotj, this.lineColor))
+                    if (Math.random() < 0.5) {
+                        this.lines.push(new Connection(doti, dotj, this.lineColor1))
+                    } else {
+                        this.lines.push(new Connection(doti, dotj, this.lineColor2))
+                    }
                 }
             }
         }
     }
     removeConnections() {
-        this.lines.filter(connection => {
+        this.lines = this.lines.filter(connection => {
             let doti = connection.doti
             let dotj = connection.dotj
             let vectori = new Vector2(doti.x, doti.y)
@@ -138,7 +144,7 @@ export class Board {
             let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
             let color = this.lines[i].colorLambda(strength)
             this.ctx.strokeStyle = color
-            this.ctx.lineWidth = 0.3
+            this.ctx.lineWidth = 0.6
             this.ctx.beginPath()
             this.ctx.moveTo(doti.x, doti.y)
             this.ctx.lineTo(dotj.x, dotj.y)
@@ -179,7 +185,19 @@ export class Board {
     // maybe we just reassign that outliers rather than generate new!!
     removeOutliers() {
         let count = this.dots.length
+        let clone = this.dots.filter(dot => dot.x > this.width || dot.x < 0 || dot.y > this.height || dot.y < 0)
         this.dots = this.dots.filter(dot => dot.x < this.width && dot.x > 0 && dot.y < this.height && dot.y > 0)
+        if (clone.length + this.dots.length != count) {
+            console.log("WTF")
+        }
+
+        clone.forEach(removedDot => {
+            removedDot.attemptedConnections.forEach(connectedDot => {
+                let index = connectedDot.attemptedConnections.indexOf(removedDot)
+                connectedDot.attemptedConnections.splice(index, 1)
+            })
+            this.lines = this.lines.filter((connection) => removedDot != connection.doti && removedDot != connection.dotj)
+        })
         let removed = count - this.dots.length
         for (let i = 0; i < removed; i++) {
             this.generateDot()

@@ -13,10 +13,11 @@ rgb(255, 183, 253)
 
 let background = 'rgb(143, 153, 251)'
 let dotColor = 'rgb(188, 145, 229)'
-let lineColor = (alpha) => `rgba(148, 0, 255, ${alpha})`
+let lineColor1 = (alpha) => `rgba(148, 0, 255, ${alpha})`
+let lineColor2 = (alpha) => `rgba(148, 0, 255, ${alpha})`
 // old color: #2E4374
-let board = new Board(1400, 500, background, dotColor, lineColor, ctx)
-for (let i = 0; i < 37; i++) {
+let board = new Board(window.innerWidth, window.innerHeight, background, dotColor, lineColor1, lineColor2, ctx)
+for (let i = 0; i < 66; i++) {
     board.generateDot()
 }
 
