@@ -57,7 +57,10 @@ class Connection {
     }
     applyForce() {
         const GRAVITATIONAL_CONSTANT = 2
-        //let force = 2 * this.doti.mass * this.dotj.mass / (this.doti.)
+        let radius = magnitude(this.doti.subtract(this.dotj))
+        let radiusSquare = radius * radius
+        let force = GRAVITATIONAL_CONSTANT * this.doti.mass * this.dotj.mass / radiusSquare
+        return
     }
 }
 
@@ -265,6 +268,10 @@ export class Vector2 {
     }
     magnitude() {
         return Math.sqrt(this.x * this.x + this.y * this.y)
+    }
+    normalize() {
+        let magnitude = this.magnitude()
+        this.x / ma
     }
     subtract(other) {
         return new Vector2(this.x - other.x, this.y - other.y)
