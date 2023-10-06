@@ -12,15 +12,16 @@ rgb(255, 183, 253)
 /* */
 let height = window.innerHeight
 let width = window.innerWidth
-let bindRadius = 500
-let lineWidth = 0.5
-let dotRenderChance = 0.0
-let lineChance = 0.3
-let dots = 100
+let bindRadius = 360
+let lineWidth = 1
+let dotRenderChance = 1
+let lineChance = 1
+let lineForce = true
+let dots = 90
 let backgroundColor = '126, 109, 224'
 let dotColor = '255, 179, 193'
-let l1Color = '126, 109, 224'
-let l2Color = '126, 109, 224'
+let l1Color = '0, 0, 0'
+let l2Color = '0, 0, 0'
 let l3Color = '0, 0, 0'
 /* */
 
@@ -49,10 +50,7 @@ console.log(window.innerHeight)
 console.log(window.innerWidth)
 cnv.height = height
 cnv.width = width
-let board = new Board(width, height, background, dotColorRgb, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, bindRadius, dotRenderChance, ctx)
-for (let i = 0; i < dots; i++) {
-    board.generateDot()
-}
+let board = new Board(width, height, background, dots, dotColorRgb, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, lineForce, bindRadius, dotRenderChance, ctx)
 
 function animate() {
     board.frame()

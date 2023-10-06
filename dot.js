@@ -26,7 +26,6 @@ export class Dot {
         ctx.fill();
         ctx.closePath();
     }
-    // maybe break up this into two functions so I can call proximity lines in between
     // could change the render var to this function so that we can control rendering on a per frame basis
     frame(ctx) {
         if (this.render) {
@@ -47,6 +46,13 @@ export class Dot {
         this.attemptedConnections = []
         return this
     }
+    addVelocity(vec) {
+        this.velocity = this.velocity.add(vec)
+
+    }
+    split() {
+        // half volume get normal of vector and -normal apply velocity, add to attempted connections so that they dont bind or force bind?
+    }
 }
 
 class Connection {
@@ -55,19 +61,25 @@ class Connection {
         this.dotj = dotj
         this.colorLambda = colorLambda
     }
+    // consider not applying force if radius gets too small
     applyForce() {
-        const GRAVITATIONAL_CONSTANT = 2
-        let radius = magnitude(this.doti.subtract(this.dotj))
+        const GRAVITATIONAL_CONSTANT = 0.00001
+        let vector = this.doti.position.subtract(this.dotj.position)
+        let radius = vector.magnitude() * 0.5
         let radiusSquare = radius * radius
         let force = GRAVITATIONAL_CONSTANT * this.doti.mass * this.dotj.mass / radiusSquare
-        return
+        let normalized = vector.normalize()
+        let iForce = normalized.scale(force * -1)
+        let jForce = normalized.scale(force)
+        this.doti.addVelocity(iForce)
+        this.dotj.addVelocity(jForce)
     }
 }
 
 // dots need to be removed once they are out of frame!
 // should have variable color
 export class Board {
-    constructor(width, height, color, dotcolor, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, bindRadius, dotRenderChance, ctx) {
+    constructor(width, height, color, dots, dotcolor, lineColor1, lineColor2, lineColor3, lineWidth, lineChance, lineForce, bindRadius, dotRenderChance, ctx) {
         this.width = width
         this.height = height
         this.color = color
@@ -77,12 +89,16 @@ export class Board {
         this.lineColor3 = lineColor3
         this.lineWidth = lineWidth
         this.lineChance = lineChance
+        this.lineForce = lineForce
         this.bindRadius = bindRadius
         this.dotRenderChance = dotRenderChance
         this.headRoom = 200
         this.ctx = ctx
         this.dots = []
         this.lines = []
+        for (let i = 0; i < dots; i++) {
+            this.generateDot()
+        }
     }
     // These guys might want to fade in
     generateDot() {
@@ -122,7 +138,7 @@ export class Board {
         this.dots.forEach(dot => dot.step())
         this.addConnections()
         this.removeConnections()
-        this.renderConnections()
+        this.renderConnections(false)
         this.dots.forEach(dot => dot.frame(this.ctx))
 
         this.removeOutliers()
@@ -130,6 +146,8 @@ export class Board {
     partialRedraw() {
         console.log("partial redraw")
     }
+
+    /* It's not ideal that we go through this list so many times per frame, we should try dependency injection */
     addConnections() {
         this.dots.sort((a, b) => a.position.x - b.position.x)
         for (let i = 0; i < this.dots.length; i++) {
@@ -186,22 +204,28 @@ export class Board {
         })
     }
 
-    renderConnections() {
+    renderConnections(render) {
         for (let i = 0; i < this.lines.length; i++) {
-            let doti = this.lines[i].doti
-            let dotj = this.lines[i].dotj
-            let vectori = new Vector2(doti.position.x, doti.position.y)
-            let vectorj = new Vector2(dotj.position.x, dotj.position.y)
-            let diff = vectori.subtract(vectorj)
-            let distance = diff.magnitude()
-            let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
-            let color = this.lines[i].colorLambda(strength)
-            this.ctx.strokeStyle = color
-            this.ctx.lineWidth = this.lineWidth
-            this.ctx.beginPath()
-            this.ctx.moveTo(doti.position.x, doti.position.y)
-            this.ctx.lineTo(dotj.position.x, dotj.position.y)
-            this.ctx.stroke()
+            if (this.lineForce) {
+                this.lines[i].applyForce()
+            }
+            if (render) {
+                let doti = this.lines[i].doti
+                let dotj = this.lines[i].dotj
+                let vectori = new Vector2(doti.position.x, doti.position.y)
+                let vectorj = new Vector2(dotj.position.x, dotj.position.y)
+                let diff = vectori.subtract(vectorj)
+                let distance = diff.magnitude()
+                let strength = Math.round((1 - (distance/doti.bindRadius)) * 100)/100
+                let color = this.lines[i].colorLambda(strength)
+                this.ctx.strokeStyle = color
+                this.ctx.lineWidth = this.lineWidth
+                this.ctx.beginPath()
+                this.ctx.moveTo(doti.position.x, doti.position.y)
+                this.ctx.lineTo(dotj.position.x, dotj.position.y)
+                this.ctx.stroke()
+            }
+            
         }
     }
     // Should we go by the greater or lesser bind distance?
@@ -271,10 +295,21 @@ export class Vector2 {
     }
     normalize() {
         let magnitude = this.magnitude()
-        this.x / ma
+        let unitx = this.x / magnitude
+        let unity = this.y / magnitude
+        return new Vector2(unitx, unity)
     }
     subtract(other) {
         return new Vector2(this.x - other.x, this.y - other.y)
+    }
+    add(other) {
+        return new Vector2(this.x + other.x, this.y + other.y)
+    }
+    scale(factor) {
+        return new Vector2(this.x * factor, this.y * factor)
+    }
+    invert() {
+        return new Vector2(this.x * -1, this.y * -1)
     }
 }
 
