@@ -117,8 +117,8 @@ export class Board {
     }
     regenerateDot(dot) {
         let radius = randPositive(1, 30)
-        let x = randPositive(0, this.width)
-        let y = randPositive(0, this.height)
+        let x = randPositive(0, (this.width + this.headRoom * 2)) - this.headRoom
+        let y = randPositive(0, (this.height + this.headRoom * 2)) - this.headRoom
         let xVelocity = rand(1.5)
         let yVelocity = rand(1)
         if (Math.random() > this.dotRenderChance) {
@@ -138,7 +138,7 @@ export class Board {
         this.dots.forEach(dot => dot.step())
         this.addConnections()
         this.removeConnections()
-        this.renderConnections(false)
+        this.renderConnections(true)
         this.dots.forEach(dot => dot.frame(this.ctx))
 
         this.removeOutliers()

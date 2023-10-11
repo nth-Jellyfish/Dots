@@ -12,12 +12,12 @@ rgb(255, 183, 253)
 /* */
 let height = window.innerHeight
 let width = window.innerWidth
-let bindRadius = 360
-let lineWidth = 1
-let dotRenderChance = 1
-let lineChance = 1
-let lineForce = true
-let dots = 90
+let bindRadius = 600
+let lineWidth = 0.5
+let dotRenderChance = 0.1
+let lineChance = 0.3
+let lineForce = false
+let dots = 72
 let backgroundColor = '126, 109, 224'
 let dotColor = '255, 179, 193'
 let l1Color = '0, 0, 0'
